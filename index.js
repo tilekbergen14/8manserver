@@ -6,7 +6,9 @@ const app = express();
 
 app.use(express.json());
 app.use(require("cors")());
-app.use("/", require("./Users/Router"));
+app.use("/", require("./Routers/User"));
+app.use("/image", require("./Routers/Image"));
+app.use("/image", express.static("image"));
 
 app.listen(
   5000,
