@@ -9,6 +9,7 @@ app.use(require("cors")());
 app.use("/", require("./Routers/User"));
 app.use("/image", require("./Routers/Image"));
 app.use("/image", express.static("image"));
+app.use("/post", require("./Routers/Post"));
 
 app.listen(
   5000,
