@@ -6,15 +6,13 @@ const Post = mongoose.model(
     {
       title: {
         type: String,
-        required: [true, "title is required!"],
         trim: true,
       },
-      description: {
-        type: String,
-        required: [true, "email is required!"],
+      body: {
+        type: Object,
       },
       imgUrl: { type: String },
-      readtime: { type: String },
+      readtime: { type: String, trim: true },
       tags: [String],
     },
     { timestamps: true }

@@ -4,7 +4,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: "100mb" }));
 app.use(require("cors")());
 app.use("/", require("./Routers/User"));
 app.use("/image", require("./Routers/Image"));
