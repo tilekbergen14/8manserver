@@ -15,14 +15,14 @@ router.get("/:id", async (req, res) => {
       author_id: user._id,
     });
   } catch (err) {
-    res.status(400).json("Something went wrog");
+    res.status(500).json("Something went wrog");
   }
 });
 router.post("/login", async (req, res) => {
   try {
     const { emailOrUsername, password } = req.body;
     let user = null;
-    const userEmail = await User.findOne({ email: toString(emailOrUsername) });
+    const userEmail = await User.findOne({ email: emailOrUsername });
     const userName = await User.findOne({
       username: emailOrUsername,
     });
@@ -42,8 +42,7 @@ router.post("/login", async (req, res) => {
         password: user.password,
         id: user._id,
       },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      process.env.JWT_SECRET
     );
     res.json({
       username: user.username,
@@ -53,7 +52,7 @@ router.post("/login", async (req, res) => {
       id: user._id,
     });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).send("Something went wrong!");
   }
 });
 
@@ -74,8 +73,7 @@ router.post("/register", async (req, res) => {
     });
     const token = await jwt.sign(
       { username: user.username, password: user.password, id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      process.env.JWT_SECRET
     );
     res.json({
       username: user.username,

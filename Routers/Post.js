@@ -5,7 +5,6 @@ const authentication = require("../Middlewares/Authenticaiton");
 
 router.post("/", authentication, async (req, res) => {
   try {
-    console.log("start");
     const { title, body, imgUrl, readtime, tags } = req.body;
     const user = req.user;
     if (!user) return res.status(409).json("Bad request");
@@ -18,8 +17,30 @@ router.post("/", authentication, async (req, res) => {
       tags: tagsArr,
       author_id: user.id,
     });
-
     res.json("Successfully created!");
+  } catch (err) {
+    console.log(err);
+    res.status(409).send(err.message);
+  }
+});
+
+router.post("/like", authentication, async (req, res) => {
+  try {
+    const postId = req.body.id;
+    const _id = req.user.id;
+    const post = await Post.findById(postId);
+    const liked = post.likes.includes(_id);
+    if (liked) {
+      post.likes = post.likes.filter(
+        (like) => JSON.stringify(like) !== JSON.stringify(_id)
+      );
+    } else {
+      post.likes.push(_id);
+    }
+    await Post.findByIdAndUpdate(postId, post, {
+      new: true,
+    });
+    res.status(200).send("reacted");
   } catch (err) {
     res.status(409).send(err.message);
   }
@@ -37,7 +58,18 @@ router.get("/", async (req, res) => {
             author: user.username,
             authorProfile: user.profileImg,
           };
-          if (user) return { ...post._doc, ...userInfo };
+          const userLiked = post.likes.includes(user._id);
+          if (user)
+            return {
+              id: post._id,
+              title: post.title,
+              tags: post.tags,
+              createdAt: post.createdAt,
+              readtime: post.readtime,
+              likes: post.likes.length,
+              userLiked: userLiked,
+              ...userInfo,
+            };
         }
       } catch (err) {
         res.status(500).json("Something went wrong");
@@ -45,6 +77,13 @@ router.get("/", async (req, res) => {
     })
   );
   res.json(newposts);
+});
+
+router.get("/:id", async (req, res) => {
+  const postId = req.params.id;
+  const post = await Post.findById(postId);
+  if (!post) res.status(404).json("Bad request");
+  res.json(post);
 });
 
 module.exports = router;

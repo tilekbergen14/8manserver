@@ -9,12 +9,13 @@ const Post = mongoose.model(
         trim: true,
       },
       body: {
-        type: Object,
+        type: Map,
       },
       imgUrl: { type: String },
       readtime: { type: String, trim: true },
       tags: [String],
       author_id: { type: mongoose.ObjectId, required: true },
+      likes: [mongoose.ObjectId],
     },
     { timestamps: true }
   )
