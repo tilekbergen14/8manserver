@@ -14,6 +14,7 @@ const Post = mongoose.model(
       imgUrl: { type: String },
       readtime: { type: String, trim: true },
       tags: [String],
+      author_id: { type: mongoose.ObjectId, required: true },
     },
     { timestamps: true }
   )

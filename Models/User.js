@@ -18,6 +18,7 @@ const User = mongoose.model(
     password: { type: String, required: [true, "Password is required!"] },
     profileImg: { type: String },
     questions: [String],
+    isAdmin: Boolean,
   })
 );
 

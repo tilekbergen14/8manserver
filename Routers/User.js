@@ -3,7 +3,21 @@ const router = express.Router();
 const User = require("../Models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { route } = require("./Post");
 
+router.get("/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const user = await User.findById(id);
+    res.json({
+      author: user.username,
+      authorProfile: user.profileImg,
+      author_id: user._id,
+    });
+  } catch (err) {
+    res.status(400).json("Something went wrog");
+  }
+});
 router.post("/login", async (req, res) => {
   try {
     const { emailOrUsername, password } = req.body;
@@ -23,11 +37,21 @@ router.post("/login", async (req, res) => {
 
     if (!passwordMatches) return res.status(403).send("Wrong password!");
     const token = await jwt.sign(
-      { username: user.username, password: user.password },
+      {
+        username: user.username,
+        password: user.password,
+        id: user._id,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-    res.json({ username: user.username, token });
+    res.json({
+      username: user.username,
+      token,
+      role: user.isAdmin ? "admin" : "user",
+      imgUrl: user.imgUrl,
+      id: user._id,
+    });
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -49,27 +73,20 @@ router.post("/register", async (req, res) => {
       password: hashedPass,
     });
     const token = await jwt.sign(
-      { username: user.username, password: user.password },
+      { username: user.username, password: user.password, id: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-    res.json({ username: user.username, token });
+    res.json({
+      username: user.username,
+      token,
+      role: user.isAdmin ? "admin" : "user",
+      imgUrl: user.imgUrl,
+      id: user._id,
+    });
   } catch (error) {
     res.status(500).send(error.message);
   }
 });
-
-function authenticateToken(req, res, next) {
-  const authHeaders = req.headers["authorization"];
-  const token = authHeaders && authHeaders.split(" ")[1];
-  if (!token) return res.status(401);
-
-  jwt.verify(token, process.env.ACCESS_TOKEN, (err, user) => {
-    if (err) return res.status(403);
-    console.log(user);
-    req.user = user;
-    next();
-  });
-}
 
 module.exports = router;
