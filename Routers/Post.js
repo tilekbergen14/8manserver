@@ -80,10 +80,28 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const postId = req.params.id;
-  const post = await Post.findById(postId);
-  if (!post) res.status(404).json("Bad request");
-  res.json(post);
+  try {
+    const postId = req.params.id;
+    let post = await Post.findById(postId);
+    if (!post) res.status(404).json("Bad request");
+    const user = await User.findById(post.author_id);
+    const userLiked = post.likes.includes(user._id);
+    post = {
+      id: post._id,
+      title: post.title,
+      tags: post.tags,
+      createdAt: post.createdAt,
+      likes: post.likes.length,
+      userLiked: userLiked,
+      author_id: user._id,
+      author: user.username,
+      imgUrl: post.imgUrl,
+      body: post.body,
+    };
+    res.json(post);
+  } catch (err) {
+    res.status(500).json("Something went wrong!");
+  }
 });
 
 module.exports = router;
