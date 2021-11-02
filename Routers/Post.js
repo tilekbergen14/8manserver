@@ -2,6 +2,7 @@ const router = require("express").Router();
 const Post = require("../Models/Post");
 const User = require("../Models/User");
 const authentication = require("../Middlewares/Authenticaiton");
+const strToTagsArr = require("../functions/strToTagsArr");
 
 router.post("/", authentication, async (req, res) => {
   try {
@@ -105,21 +106,3 @@ router.get("/:id", async (req, res) => {
 });
 
 module.exports = router;
-
-function strToTagsArr(tags) {
-  const tagsArr = [];
-  let start = null,
-    end = null;
-  for (let i = 0; i < tags.length; i++) {
-    if (tags[i] === "#") {
-      start = i;
-    } else if (tags[i] === " " && start !== null) {
-      end = i;
-    }
-    if (start !== null && end !== null) {
-      tagsArr.push(tags.slice(start + 1, end));
-      (start = null), (end = null);
-    }
-  }
-  return tagsArr;
-}
