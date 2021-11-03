@@ -20,6 +20,28 @@ router.post("/", authentication, async (req, res) => {
   }
 });
 
+router.post("/like", authentication, async (req, res) => {
+  try {
+    const questionId = req.body.id;
+    const _id = req.user.id;
+    const question = await Question.findById(questionId);
+    const liked = question.likes.includes(_id);
+    if (liked) {
+      question.likes = question.likes.filter(
+        (like) => JSON.stringify(like) !== JSON.stringify(_id)
+      );
+    } else {
+      question.likes.push(_id);
+    }
+    await Question.findByIdAndUpdate(questionId, question, {
+      new: true,
+    });
+    res.status(200).send("reacted");
+  } catch (err) {
+    res.status(409).send(err.message);
+  }
+});
+
 router.get("/", async (req, res) => {
   const questions = await Question.find({});
   const newquestions = await Promise.all(
@@ -52,26 +74,31 @@ router.get("/", async (req, res) => {
   res.json(newquestions);
 });
 
-router.post("/like", authentication, async (req, res) => {
-  try {
-    const questionId = req.body.id;
-    const _id = req.user.id;
-    const question = await Question.findById(questionId);
-    const liked = question.likes.includes(_id);
-    if (liked) {
-      question.likes = question.likes.filter(
-        (like) => JSON.stringify(like) !== JSON.stringify(_id)
-      );
-    } else {
-      question.likes.push(_id);
-    }
-    await Question.findByIdAndUpdate(questionId, question, {
-      new: true,
-    });
-    res.status(200).send("reacted");
-  } catch (err) {
-    res.status(409).send(err.message);
+router.get("/:id", async (req, res) => {
+  try{
+    const questionId = req.params.id
+    const question = await Question.findById(questionId)
+    const user = await User.findById(question.author_id);
+    const userInfo = {
+      author_id: user._id,
+      author: user.username,
+      authorProfile: user.profileImg,
+    };
+    const userLiked = question.likes.includes(user._id);
+    if(question) res.json({
+      id: question._id,
+      title: question.title,
+      createdAt: question.createdAt,
+      likes: question.likes.length,
+      userLiked: userLiked,
+      body: question.body,
+      ...userInfo,
+    })
+  }catch(err){
+    console.log(err.message)
+    res.status(500).json('Something went wrong!')
   }
-});
+})
+
 
 module.exports = router;
