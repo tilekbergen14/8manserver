@@ -8,6 +8,7 @@ const Answer = mongoose.model(
         type: Map,
         required: true,
       },
+      question_id: { type: mongoose.ObjectId, required: true },
       author_id: { type: mongoose.ObjectId, required: true },
       likes: [mongoose.ObjectId],
     },

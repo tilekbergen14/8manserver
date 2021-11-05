@@ -11,7 +11,7 @@ app.use("/image", require("./Routers/Image"));
 app.use("/image", express.static("image"));
 app.use("/post", require("./Routers/Post"));
 app.use("/question", require("./Routers/Question"));
-app.use("/answer", require("./Routers/Question"));
+app.use("/answer", require("./Routers/Answer"));
 
 app.listen(
   5000,
