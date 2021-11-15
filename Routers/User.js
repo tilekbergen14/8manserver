@@ -3,16 +3,16 @@ const router = express.Router();
 const User = require("../Models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { route } = require("./Post");
 
 router.get("/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const user = await User.findById(id);
     res.json({
-      author: user.username,
-      authorProfile: user.profileImg,
-      author_id: user._id,
+      username: user.username,
+      profile: user.profileImg,
+      id: user._id,
+      email: user.email,
     });
   } catch (err) {
     res.status(500).json("Something went wrog");

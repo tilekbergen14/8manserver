@@ -89,6 +89,8 @@ router.get("/:id", async (req, res) => {
     const newAnswers = await Promise.all(
       answers.map(async (answer) => {
         const author = await User.findById(answer.author_id);
+        const userLiked = answer.likes.includes(user._id);
+        const likes = answer.likes.length;
         return {
           id: answer._id,
           body: answer.body,
@@ -96,6 +98,8 @@ router.get("/:id", async (req, res) => {
           author_id: answer.author_id,
           author: author.username,
           authorProfile: author.profileImg,
+          userLiked: userLiked,
+          likes: likes,
         };
       })
     );
