@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require("../Models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const authorization = require("../Middlewares/Authenticaiton");
 
 router.get("/:id", async (req, res) => {
   try {
@@ -84,6 +85,17 @@ router.post("/register", async (req, res) => {
     });
   } catch (error) {
     res.status(500).send(error.message);
+  }
+});
+
+router.put("/", authorization, async (req, res) => {
+  try {
+    const info = req.body;
+    const user = req.user;
+    const result = await User.findByIdAndUpdate(user.id, info, { new: true });
+    result && res.json("updated");
+  } catch (err) {
+    res.status(500).json("Something went wrong!");
   }
 });
 
