@@ -21,6 +21,17 @@ router.post("/", authentication, async (req, res) => {
   }
 });
 
+router.delete("/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    await Question.findByIdAndDelete(id);
+    await Answer.findOneAndDelete({ question_id: id });
+
+    res.json("deleted");
+  } catch (error) {
+    res.status(500).json("Something went wrong!");
+  }
+});
 router.post("/like", authentication, async (req, res) => {
   try {
     const questionId = req.body.id;
@@ -44,7 +55,13 @@ router.post("/like", authentication, async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const questions = await Question.find({});
+  const offset = req.query.questions ? req.query.questions : 0;
+
+  const questions = await Question.find({})
+    .sort({ createdAt: -1 })
+    .skip(parseInt(offset))
+    .limit(5);
+
   const newquestions = await Promise.all(
     questions.map(async (question) => {
       try {
@@ -118,6 +135,18 @@ router.get("/:id", async (req, res) => {
   } catch (err) {
     console.log(err.message);
     res.status(500).json("Something went wrong!");
+  }
+});
+
+router.put("/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const body = req.body;
+    const question = await Question.findByIdAndUpdate(id, body, { new: true });
+    question && res.json("updated");
+  } catch (err) {
+    console.log(err.message);
   }
 });
 

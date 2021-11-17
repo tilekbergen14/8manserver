@@ -3,7 +3,7 @@ function strToTagsArr(tags) {
   let start = null,
     end = null;
   for (let i = 0; i < tags.length; i++) {
-    if (tags[i] === "#") {
+    if (tags[i] === "#" && tags[i + 1] !== "#") {
       start = i;
     } else if (tags[i] === " " && start !== null) {
       end = i;

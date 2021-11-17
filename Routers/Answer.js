@@ -50,4 +50,14 @@ router.post("/like", authorization, async (req, res) => {
   }
 });
 
+router.put("/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const body = req.body;
+    const result = await Answer.findByIdAndUpdate(id, body, { new: true });
+    result && res.json("updated");
+  } catch (err) {
+    res.status(500).json("Something went wrong!");
+  }
+});
 module.exports = router;
