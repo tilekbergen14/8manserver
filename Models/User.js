@@ -19,6 +19,7 @@ const User = mongoose.model(
     profileImg: { type: String },
     questions: [String],
     isAdmin: Boolean,
+    confirmed: Boolean,
   })
 );
 

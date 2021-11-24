@@ -4,6 +4,7 @@ const User = require("../Models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const authorization = require("../Middlewares/Authenticaiton");
+const nodemailer = require("../functions/nodemailer");
 
 router.get("/:id", async (req, res) => {
   try {
@@ -19,6 +20,7 @@ router.get("/:id", async (req, res) => {
     res.status(500).json("Something went wrog");
   }
 });
+
 router.post("/login", async (req, res) => {
   try {
     const { emailOrUsername, password } = req.body;
@@ -60,29 +62,56 @@ router.post("/login", async (req, res) => {
 router.post("/register", async (req, res) => {
   const { username, email, password, password2 } = req.body;
   try {
-    if (await User.findOne({ email }))
-      return res.status(403).send("This email is already used!");
+    const emailUser = await User.findOne({ email });
+    if (emailUser)
+      if (emailUser.confirmed) {
+        const token = await jwt.sign(
+          {
+            username: user.username,
+            password: user.password,
+            id: user._id,
+          },
+          process.env.JWT_SECRET,
+          { expiresIn: "1h" }
+        );
+        const emailSent = await nodemailer({
+          sendto: email,
+          html: `<a href='http://localhost:3000/verify/email/${token}'>Verify your email!</a>`,
+        });
+        if (emailSent)
+          return res.status(403).send("This email is already used!");
+      } else {
+        return res.status(200).send("Verify email!");
+      }
     if (await User.findOne({ username }))
       return res.status(403).send("This username is already used!");
     if (password !== password2)
       return res.status(403).send("Passwords doesn't match!");
+
     const hashedPass = await bcrypt.hash(password, 10);
     const user = await User.create({
       username: req.body.username,
       email: req.body.email,
       password: hashedPass,
+      confirmed: false,
     });
+
     const token = await jwt.sign(
-      { username: user.username, password: user.password, id: user._id },
-      process.env.JWT_SECRET
+      {
+        username: user.username,
+        password: user.password,
+        id: user._id,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
     );
-    res.json({
-      username: user.username,
-      token,
-      role: user.isAdmin ? "admin" : "user",
-      imgUrl: user.imgUrl,
-      id: user._id,
+
+    const emailSent = await nodemailer({
+      sendto: email,
+      html: `<a href='http://localhost:3000/verify/email/${token}'>Verify your email!</a>`,
     });
+
+    emailSent && res.json("Verify email!");
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -96,6 +125,52 @@ router.put("/", authorization, async (req, res) => {
     result && res.json("updated");
   } catch (err) {
     res.status(500).json("Something went wrong!");
+  }
+});
+
+router.post("/forgetpassword", async (req, res) => {
+  try {
+    const email = req.body.email;
+    if (!email) return res.status(401).json("Please enter email!");
+    const user = await User.findOne({ email });
+    const token = await jwt.sign(
+      {
+        username: user.username,
+        password: user.password,
+        id: user._id,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+    const emailSent = await nodemailer({
+      sendto: email,
+      html: `<a href='http://localhost:3000/changepassword/${token}'>Change your password!</a>`,
+    });
+    emailSent && res.json("Please check your email!");
+  } catch (err) {
+    res.status(500).json("Something went wrog");
+  }
+});
+
+router.post("/changepassword/:token", async (req, res) => {
+  try {
+    const verifyToken = req.params.token;
+    const { newpassword, newpassword2 } = req.body;
+    const { id } = await jwt.verify(verifyToken, process.env.JWT_SECRET);
+
+    if (newpassword && id) {
+      if (newpassword !== newpassword2)
+        return req.status(400).send("Passwords doesn't match!");
+      const hashedPass = await bcrypt.hash(newpassword, 10);
+      const user = await User.findByIdAndUpdate(id, { password: hashedPass });
+      if (user) {
+        res.json("Password changed successfully!");
+      }
+    } else {
+      res.json("Rigth token!");
+    }
+  } catch (err) {
+    res.status(500).json("Something went wrog");
   }
 });
 
