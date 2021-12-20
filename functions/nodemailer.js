@@ -22,7 +22,7 @@ async function main({ sendto, html }) {
     });
     return info;
   } catch (err) {
-    console.log(err.message);
+    console.log("Nodemailer", err);
   }
 }
 

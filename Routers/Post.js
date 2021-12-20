@@ -20,11 +20,22 @@ router.post("/", authentication, async (req, res) => {
     });
     res.json("Successfully created!");
   } catch (err) {
-    console.log(err);
     res.status(409).send(err.message);
   }
 });
 
+router.get("/relatedposts", async (req, res) => {
+  try {
+    const limit = req.query.limit ? req.query.limit : 0;
+    const posts = await Post.find({})
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+    res.json(posts);
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).json("Something went wrong!");
+  }
+});
 router.post("/like", authentication, async (req, res) => {
   try {
     const postId = req.body.id;

@@ -64,12 +64,12 @@ router.post("/register", async (req, res) => {
   try {
     const emailUser = await User.findOne({ email });
     if (emailUser)
-      if (emailUser.confirmed) {
+      if (!emailUser.confirmed) {
         const token = await jwt.sign(
           {
-            username: user.username,
-            password: user.password,
-            id: user._id,
+            username: emailUser.username,
+            password: emailUser.password,
+            id: emailUser._id,
           },
           process.env.JWT_SECRET,
           { expiresIn: "1h" }
@@ -78,10 +78,10 @@ router.post("/register", async (req, res) => {
           sendto: email,
           html: `<a href='http://localhost:3000/verify/email/${token}'>Verify your email!</a>`,
         });
-        if (emailSent)
-          return res.status(403).send("This email is already used!");
+
+        if (emailSent) return res.status(403).send("Verify your email!");
       } else {
-        return res.status(200).send("Verify email!");
+        return res.status(200).send("This email is already used!");
       }
     if (await User.findOne({ username }))
       return res.status(403).send("This username is already used!");
@@ -110,10 +110,10 @@ router.post("/register", async (req, res) => {
       sendto: email,
       html: `<a href='http://localhost:3000/verify/email/${token}'>Verify your email!</a>`,
     });
-
     emailSent && res.json("Verify email!");
   } catch (error) {
     res.status(500).send(error.message);
+    console.log(error);
   }
 });
 
