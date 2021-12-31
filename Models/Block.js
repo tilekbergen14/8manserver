@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
-const Serie = mongoose.model(
-  "Serie",
+const Block = mongoose.model(
+  "Block",
   mongoose.Schema(
     {
       title: {
@@ -9,10 +9,10 @@ const Serie = mongoose.model(
         trim: true,
         require,
       },
-      body: { type: Map },
+      series: [mongoose.ObjectId],
     },
-    { timestamps: false }
+    { timestamps: true }
   )
 );
 
-module.exports = Serie;
+module.exports = Block;

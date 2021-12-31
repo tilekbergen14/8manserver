@@ -15,7 +15,7 @@ const Lesson = mongoose.model(
       },
       imgUrl: { type: String },
       author_id: { type: mongoose.ObjectId, required: true },
-      series: [mongoose.ObjectId],
+      blocks: [mongoose.ObjectId],
       published: { type: Boolean, default: false },
     },
     { timestamps: true }
