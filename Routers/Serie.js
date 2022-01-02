@@ -17,10 +17,13 @@ router.post("/", authorization, async (req, res) => {
     if (!block) return res.status(404).json("Block doesn't exist by this id!");
     if (block.series.includes(title))
       return res.status(404).json("By this name serie exists in this course!");
+    console.log(title);
     const serie = await Serie.create({
       title,
       body,
     });
+    console.log(serie);
+
     if (position) {
       block.series.splice(position - 1, 0, serie._id);
     } else {
@@ -38,4 +41,15 @@ router.post("/", authorization, async (req, res) => {
   }
 });
 
+router.get("/:id", async (req, res) => {
+  try {
+    const serieId = req.params.id;
+    const serie = await Serie.findById(serieId);
+    if (!serie) return res.status(404).json("Couldn't find serie!");
+    res.json(serie);
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).json("Something went wrong!");
+  }
+});
 module.exports = router;

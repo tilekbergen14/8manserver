@@ -7,7 +7,7 @@ const Serie = mongoose.model(
       title: {
         type: String,
         trim: true,
-        require,
+        required: true,
       },
       body: { type: Map },
     },

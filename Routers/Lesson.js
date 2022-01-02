@@ -33,10 +33,10 @@ router.get("/", async (req, res) => {
     console.log(err.message);
   }
 });
-router.get("/:id", async (req, res) => {
+router.get("/:slug", async (req, res) => {
   try {
-    const id = req.params.id;
-    const lesson = await Lesson.findById(id);
+    const slug = req.params.slug;
+    const lesson = await Lesson.findOne({ slug: slug });
     if (!lesson) res.status(404).json("Couldn't find lesson!");
     const blocks = await Promise.all(
       lesson.blocks.map(async (id) => {
@@ -46,7 +46,10 @@ router.get("/:id", async (req, res) => {
             block.series.map(async (id) => {
               try {
                 const serie = await Serie.findById(id);
-                return serie;
+                return {
+                  _id: serie._id,
+                  title: serie.title,
+                };
               } catch (err) {
                 res.status(500).json("Something went wrong");
               }
@@ -61,6 +64,7 @@ router.get("/:id", async (req, res) => {
     res.json({
       _id: lesson._id,
       title: lesson.title,
+      slug: lesson.slug,
       blocks,
       price: lesson.price,
     });
@@ -81,8 +85,24 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    const id = req.params.id;
-    const result = await Lesson.findByIdAndDelete(id);
+    const { blockId } = req.query;
+    const lessonId = req.params.id;
+    if (!blockId) {
+      const result = await Lesson.findByIdAndDelete(id);
+      return result && res.json("deleted");
+    }
+    const block = await Block.findByIdAndDelete(blockId);
+
+    const lesson = await Lesson.findById(lessonId);
+    const blocks = lesson.blocks.filter(
+      (block) => JSON.stringify(block._id) !== JSON.stringify(blockId)
+    );
+
+    const result = await Lesson.findByIdAndUpdate(
+      lessonId,
+      { blocks: blocks },
+      { new: true }
+    );
     result && res.json("deleted");
   } catch (err) {
     res.status(500).json("Something went wrong!");

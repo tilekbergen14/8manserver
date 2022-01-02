@@ -4,14 +4,23 @@ const Lesson = mongoose.model(
   "Lesson",
   mongoose.Schema(
     {
+      slug: {
+        type: String,
+        trim: true,
+        required: true,
+        unique: true,
+      },
       title: {
         type: String,
         trim: true,
-        require,
+        required: true,
+      },
+      description: {
+        type: String,
       },
       price: {
         type: Number,
-        require,
+        required: true,
       },
       imgUrl: { type: String },
       author_id: { type: mongoose.ObjectId, required: true },
