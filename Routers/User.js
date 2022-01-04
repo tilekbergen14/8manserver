@@ -79,7 +79,11 @@ router.post("/register", async (req, res) => {
           html: `<a href='http://localhost:3000/verify/email/${token}'>Verify your email!</a>`,
         });
 
-        if (emailSent) return res.status(403).send("Verify your email!");
+        if (emailSent)
+          return res
+            .status(403)
+            .send("This email is already used, verify your email!");
+        return res.status(500).send("Something went wrong!");
       } else {
         return res.status(200).send("This email is already used!");
       }
@@ -110,7 +114,7 @@ router.post("/register", async (req, res) => {
       sendto: email,
       html: `<a href='http://localhost:3000/verify/email/${token}'>Verify your email!</a>`,
     });
-    emailSent && res.json("Verify email!");
+    emailSent && res.json("Please verify your email, chech your inbox!");
   } catch (error) {
     res.status(500).send(error.message);
     console.log(error);

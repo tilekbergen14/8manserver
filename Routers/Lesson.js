@@ -30,7 +30,6 @@ router.get("/", async (req, res) => {
     res.json(lessons);
   } catch (err) {
     res.status(409).send(err.message);
-    console.log(err.message);
   }
 });
 router.get("/:slug", async (req, res) => {
