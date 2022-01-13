@@ -19,8 +19,7 @@ const Lesson = mongoose.model(
         type: String,
       },
       price: {
-        type: Number,
-        required: true,
+        type: String,
       },
       imgUrl: { type: String },
       author_id: { type: mongoose.ObjectId, required: true },

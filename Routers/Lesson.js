@@ -4,23 +4,48 @@ const User = require("../Models/User");
 const authorization = require("../middlewares/Authenticaiton");
 const Block = require("../Models/Block");
 const Serie = require("../Models/Series");
+const upload = require("../Middlewares/multer");
+const fs = require("fs");
+const s3upload = require("../functions/s3upload");
 
-router.post("/", authorization, async (req, res) => {
+router.post("/", upload.single("file"), authorization, async (req, res) => {
   try {
     let user = req.user;
     if (!user) return res.status(409).json("Bad request");
     user = await User.findById(user.id);
     if (!user) return res.status(409).json("Bad request");
     if (!user.isAdmin) return res.status(409).json("Bad request");
-    const lesson = await Lesson.create({
-      ...req.body,
-      author_id: user._id,
-    });
-
-    res.json("Successfully created!");
+    const { title, slug } = req.body;
+    if (!title) return res.status(409).json("Title is required!");
+    if (!slug) return res.status(409).json("Slug is required!");
+    try {
+      const lesson = await Lesson.create({
+        ...req.body,
+        author_id: user._id,
+      });
+      try {
+        const data = await s3upload(req.file.path, req.file.filename);
+        if (data) {
+          await Lesson.findByIdAndUpdate(lesson._id, { imgUrl: data.Location });
+          fs.unlink(req.file.path, () => {});
+          return res.json("Successfully created!");
+        }
+      } catch (err) {
+        fs.unlink(req.file.path, () => {});
+      }
+    } catch (err) {
+      if (req.file) {
+        fs.unlink(req.file.path, () => {});
+      }
+      if (err.keyPattern?.slug)
+        return res.status(409).json("Slug should be unique!");
+      if (err.keyPattern?.price)
+        return res.status(409).json("Price should be number!");
+      if (err.keyPattern?.title)
+        return res.status(409).json("Title is required!");
+    }
   } catch (err) {
-    res.status(409).send(err.message);
-    console.log(err);
+    res.status(409).send("Something went wrong please try again later!");
   }
 });
 
