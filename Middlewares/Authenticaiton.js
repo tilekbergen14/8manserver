@@ -6,7 +6,9 @@ async function authentication(req, res, next) {
     const token = authHeaders && authHeaders.split(" ")[1];
     if (!token) return res.status(401).json("Something went wrong! Try again!");
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) return res.status(403).json("jwt expired");
+      if (err) {
+        return res.status(403).json("Something went wrong");
+      }
       req.user = user;
       next();
     });

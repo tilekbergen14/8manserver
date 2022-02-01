@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const authorization = require("../Middlewares/Authenticaiton");
 const nodemailer = require("../functions/nodemailer");
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", authorization, async (req, res) => {
   try {
     const id = req.params.id;
     const user = await User.findById(id);

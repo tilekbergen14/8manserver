@@ -6,52 +6,43 @@ const Block = require("../Models/Block");
 const Serie = require("../Models/Series");
 const upload = require("../Middlewares/multer");
 const fs = require("fs");
-const s3upload = require("../functions/s3upload");
 
-router.post("/", upload.single("file"), authorization, async (req, res) => {
+router.post("/", authorization, upload.single("file"), async (req, res) => {
   try {
     let user = req.user;
     if (!user) return res.status(409).json("Bad request");
     user = await User.findById(user.id);
     if (!user) return res.status(409).json("Bad request");
     if (!user.isAdmin) return res.status(409).json("Bad request");
-    const { title, slug } = req.body;
-    if (!title) return res.status(409).json("Title is required!");
-    if (!slug) return res.status(409).json("Slug is required!");
     try {
       const lesson = await Lesson.create({
         ...req.body,
+        imgUrl: req.file ? req.file.path : "",
         author_id: user._id,
       });
-      try {
-        const data = await s3upload(req.file.path, req.file.filename);
-        if (data) {
-          await Lesson.findByIdAndUpdate(lesson._id, { imgUrl: data.Location });
-          fs.unlink(req.file.path, () => {});
-          return res.json("Successfully created!");
-        }
-      } catch (err) {
-        fs.unlink(req.file.path, () => {});
-      }
+      res.json("Successfully created!");
     } catch (err) {
       if (req.file) {
         fs.unlink(req.file.path, () => {});
       }
-      if (err.keyPattern?.slug)
-        return res.status(409).json("Slug should be unique!");
-      if (err.keyPattern?.price)
-        return res.status(409).json("Price should be number!");
-      if (err.keyPattern?.title)
-        return res.status(409).json("Title is required!");
+      if (err.code === 11000) {
+        if (err.keyPattern.slug) {
+          return res.status(400).json("Slug should be unique and not blank!");
+        }
+        if (err.keyPattern.title) {
+          return res.status(400).json("Title is required!");
+        }
+      }
+      return res.status(500).send("Something went wrong!");
     }
   } catch (err) {
-    res.status(409).send("Something went wrong please try again later!");
+    return res.status(500).send("Something went wrong!");
   }
 });
 
 router.get("/", async (req, res) => {
   try {
-    const lessons = await Lesson.find({});
+    const lessons = await Lesson.find({}).sort({ createdAt: -1 });
     res.json(lessons);
   } catch (err) {
     res.status(409).send(err.message);
@@ -61,7 +52,7 @@ router.get("/:slug", async (req, res) => {
   try {
     const slug = req.params.slug;
     const lesson = await Lesson.findOne({ slug: slug });
-    if (!lesson) res.status(404).json("Couldn't find lesson!");
+    if (!lesson) return res.status(404).json("Couldn't find lesson!");
     const blocks = await Promise.all(
       lesson.blocks.map(async (id) => {
         try {
@@ -89,20 +80,30 @@ router.get("/:slug", async (req, res) => {
       _id: lesson._id,
       title: lesson.title,
       slug: lesson.slug,
+      imgUrl: lesson.imgUrl,
+      description: lesson.description,
+      published: lesson.published,
       blocks,
       price: lesson.price,
     });
   } catch (err) {
     res.status(409).send(err.message);
-    console.log(err.message);
   }
 });
-router.put("/:id", async (req, res) => {
+router.put("/:id", authorization, upload.single("file"), async (req, res) => {
   try {
     const id = req.params.id;
-    const result = await Lesson.findByIdAndUpdate(id, req.body, { new: true });
-    result && res.json("updated");
+    const result = await Lesson.findByIdAndUpdate(
+      id,
+      { imgUrl: req.file && req.file.path, ...req.body },
+      { new: true }
+    );
+    if (result) return res.json("updated");
   } catch (err) {
+    if (req.file) {
+      fs.unlink(req.file.path, () => {});
+    }
+    console.log(err.message);
     res.status(500).json("Something went wrong!");
   }
 });
@@ -112,7 +113,7 @@ router.delete("/:id", async (req, res) => {
     const { blockId } = req.query;
     const lessonId = req.params.id;
     if (!blockId) {
-      const result = await Lesson.findByIdAndDelete(id);
+      const result = await Lesson.findByIdAndDelete(lessonId);
       return result && res.json("deleted");
     }
     const block = await Block.findByIdAndDelete(blockId);

@@ -3,23 +3,52 @@ const Post = require("../Models/Post");
 const User = require("../Models/User");
 const authentication = require("../Middlewares/Authenticaiton");
 const strToTagsArr = require("../functions/strToTagsArr");
-
-router.post("/", authentication, async (req, res) => {
+const upload = require("../Middlewares/multer");
+const fs = require("fs");
+router.post("/", authentication, upload.single("file"), async (req, res) => {
   try {
-    const { title, body, imgUrl, readtime, tags } = req.body;
+    const { title, body, readtime, tags } = req.body;
     const user = req.user;
     if (!user) return res.status(409).json("Bad request");
     const tagsArr = strToTagsArr(tags + " ");
     const post = await Post.create({
       title,
       body,
-      imgUrl,
+      imgUrl: req.file && req.file.path,
       readtime,
       tags: tagsArr,
       author_id: user.id,
     });
     res.json("Successfully created!");
   } catch (err) {
+    if (req.file) {
+      fs.unlink(req.file.path, () => {});
+    }
+    res.status(409).send(err.message);
+  }
+});
+
+router.put("/:id", authentication, upload.single("file"), async (req, res) => {
+  try {
+    const id = req.params.id;
+    const tags = strToTagsArr(req.body.tags + " ");
+    const { title, readtime, body, file } = req.body;
+    const post = await Post.findByIdAndUpdate(
+      id,
+      {
+        title,
+        readtime,
+        body,
+        tags: tags,
+        imgUrl: req.file ? req.file.path : file,
+      },
+      { new: true }
+    );
+    post && res.json("updated");
+  } catch (err) {
+    if (req.file) {
+      fs.unlink(req.file.path, () => {});
+    }
     res.status(409).send(err.message);
   }
 });
@@ -59,7 +88,10 @@ router.post("/like", authentication, async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const posts = await Post.find({});
+  const limit = req.query.limit ? req.query.limit : 0;
+  const posts = await Post.find({})
+    .sort({ createdAt: -1 })
+    .limit(parseInt(limit));
   const newposts = await Promise.all(
     posts.map(async (post) => {
       try {
@@ -76,6 +108,7 @@ router.get("/", async (req, res) => {
               id: post._id,
               title: post.title,
               tags: post.tags,
+              imgUrl: post.imgUrl,
               createdAt: post.createdAt,
               readtime: post.readtime,
               likes: post.likes.length,
@@ -106,6 +139,7 @@ router.get("/:id", async (req, res) => {
       likes: post.likes.length,
       userLiked: userLiked,
       author_id: user._id,
+      readtime: post.readtime,
       author: user.username,
       imgUrl: post.imgUrl,
       body: post.body,
@@ -116,4 +150,13 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+router.delete("/:id", authentication, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const result = await Post.findByIdAndDelete(id);
+    result && res.json("Deleted");
+  } catch (err) {
+    res.status(409).send(err.message);
+  }
+});
 module.exports = router;

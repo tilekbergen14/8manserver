@@ -9,7 +9,7 @@ const Post = mongoose.model(
         trim: true,
       },
       body: {
-        type: Map,
+        type: String,
       },
       imgUrl: { type: String },
       readtime: { type: String, trim: true },
