@@ -16,6 +16,7 @@ app.use("/verify", require("./Routers/Verify"));
 app.use("/lesson", require("./Routers/Lesson"));
 app.use("/block", require("./Routers/Block"));
 app.use("/serie", require("./Routers/Serie"));
+app.use("/search", require("./Routers/Search"));
 
 app.listen(
   5000,
