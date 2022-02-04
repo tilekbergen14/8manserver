@@ -11,7 +11,14 @@ router.get("/", async (req, res) => {
     const offset = req.query.questions ? req.query.questions : 0;
     const posts = await Post.find(
       {
-        title: { $regex: keyword, $options: "i" },
+        $or: [
+          {
+            tags: { $regex: keyword, $options: "i" },
+          },
+          {
+            title: { $regex: keyword, $options: "i" },
+          },
+        ],
       },
       "_id title readtime tags createdAt imgUrl"
     )

@@ -37,7 +37,8 @@ router.post("/login", async (req, res) => {
     }
     if (!user) return res.status(403).send("Couldnt find user!");
     const passwordMatches = await bcrypt.compare(password, user.password);
-
+    if (!user.confirmed)
+      return res.status(403).send("Please verify your email!");
     if (!passwordMatches) return res.status(403).send("Wrong password!");
     const token = await jwt.sign(
       {

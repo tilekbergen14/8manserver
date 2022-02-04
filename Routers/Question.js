@@ -4,6 +4,7 @@ const authentication = require("../Middlewares/Authenticaiton");
 const User = require("../Models/User");
 const strToTagsArr = require("../functions/strToTagsArr");
 const Answer = require("../Models/Answer");
+const sort = require("../functions/sort");
 
 router.post("/", authentication, async (req, res) => {
   try {
@@ -55,13 +56,22 @@ router.post("/like", authentication, async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const offset = req.query.questions ? req.query.questions : 0;
-
-  const questions = await Question.find({})
-    .sort({ createdAt: -1 })
-    .skip(parseInt(offset))
-    .limit(5);
-
+  const offset = req.query.offset ? req.query.offset : 0;
+  const limit = req.query.limit ? req.query.limit : 10;
+  const category = req.query?.category;
+  let questions;
+  if (category === "top") {
+    const result = await Question.find({})
+      .sort({ likes: -1 })
+      .skip(parseInt(offset))
+      .limit(limit);
+    questions = result;
+  } else {
+    questions = await Question.find({})
+      .sort({ createdAt: -1 })
+      .skip(parseInt(offset))
+      .limit(limit);
+  }
   const newquestions = await Promise.all(
     questions.map(async (question) => {
       try {
@@ -146,6 +156,17 @@ router.put("/:id", async (req, res) => {
     question && res.json("updated");
   } catch (err) {
     console.log(err.message);
+  }
+});
+
+router.get("/getuserquestions/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const questions = await Question.find({ author_id: id });
+    res.json(questions);
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send("Something went wrong?");
   }
 });
 

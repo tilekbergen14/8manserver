@@ -88,14 +88,28 @@ router.post("/like", authentication, async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const limit = req.query.limit ? req.query.limit : 0;
-  const posts = await Post.find({})
-    .sort({ createdAt: -1 })
-    .limit(parseInt(limit));
+  const offset = req.query.offset ? req.query.offset : 0;
+  const limit = req.query.limit ? req.query.limit : 10;
+  const category = req.query?.category;
+  let posts;
+  if (category === "top") {
+    const result = await Post.find({})
+      .sort({ likes: -1 })
+      .skip(parseInt(offset))
+      .limit(limit);
+    console.log(offset);
+    posts = result;
+  } else {
+    posts = await Post.find({})
+      .sort({ createdAt: -1 })
+      .skip(parseInt(offset))
+      .limit(limit);
+  }
+
   const newposts = await Promise.all(
     posts.map(async (post) => {
-      try {
-        if (post.author_id) {
+      if (post.author_id) {
+        try {
           const user = await User.findById(post.author_id);
           const userInfo = {
             author_id: user._id,
@@ -115,9 +129,9 @@ router.get("/", async (req, res) => {
               userLiked: userLiked,
               ...userInfo,
             };
+        } catch (err) {
+          return post;
         }
-      } catch (err) {
-        res.status(500).json("Something went wrong");
       }
     })
   );
