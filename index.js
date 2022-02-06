@@ -18,6 +18,10 @@ app.use("/block", require("./Routers/Block"));
 app.use("/serie", require("./Routers/Serie"));
 app.use("/search", require("./Routers/Search"));
 
+app.get("/", (req, res) => {
+  res.send("Hello world");
+});
+
 app.listen(
   5000,
   mongoose
