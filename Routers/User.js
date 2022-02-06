@@ -138,6 +138,8 @@ router.post("/forgetpassword", async (req, res) => {
     const email = req.body.email;
     if (!email) return res.status(401).json("Please enter email!");
     const user = await User.findOne({ email });
+    if (!user)
+      return res.status(401).json("User does not exist with this email!");
     const token = await jwt.sign(
       {
         username: user.username,
@@ -153,7 +155,7 @@ router.post("/forgetpassword", async (req, res) => {
     });
     emailSent && res.json("Please check your email!");
   } catch (err) {
-    res.status(500).json("Something went wrog");
+    res.status(500).json("Something went wrong");
   }
 });
 

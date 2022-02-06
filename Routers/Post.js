@@ -90,7 +90,7 @@ router.post("/like", authentication, async (req, res) => {
 router.get("/", async (req, res) => {
   const offset = req.query.offset ? req.query.offset : 0;
   const limit = req.query.limit ? req.query.limit : 10;
-  const category = req.query?.category;
+  const category = req.query.category;
   let posts;
   if (category === "top") {
     const result = await Post.find({})
